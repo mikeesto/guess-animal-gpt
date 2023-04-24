@@ -1,72 +1,169 @@
 <script lang="ts">
-	import countries from '../data/countryList.json';
+	import { fade } from 'svelte/transition';
+	import { afterUpdate } from 'svelte';
+	import animals from '../data/animals.json';
+	import GameOver from '../components/GameOver.svelte';
+	import Nope from '../components/Nope.svelte';
 
 	// Pick a random country as the answer
-	const answer = countries[Math.floor(Math.random() * countries.length)][1];
+	const answer = animals[Math.floor(Math.random() * animals.length)];
 
 	// Pick 9 other countries to use as possible choices
-	const countryChoices: string[] = [];
+	const animalChoices: string[] = [];
 
-	while (countryChoices.length < 9) {
-		const country = countries[Math.floor(Math.random() * countries.length)][1];
-		if (country !== answer && !countryChoices.includes(country)) {
-			countryChoices.push(country);
+	while (animalChoices.length < 9) {
+		const country = animals[Math.floor(Math.random() * animals.length)];
+		if (country !== answer && !animalChoices.includes(country)) {
+			animalChoices.push(country);
 		}
 	}
 
-	// Add the answer to the list of choices and shuffle them
-	countryChoices.push(answer);
-	countryChoices.sort(() => Math.random() - 0.5);
-
-	interface Questions {
-		question: string;
-		answer: string;
-	}
+	// Add the answer to the list of choices and sort them
+	animalChoices.push(answer);
+	animalChoices.sort();
 
 	let mode: 'ASK' | 'GUESS' = 'ASK';
-	let questions = [] as Questions[];
-	let question = '';
-	let guess: string;
+	let tableWrapper: HTMLDivElement;
+	let questions = [] as { question: string; answer: string }[];
+	let inputQuestion = '';
+	let inputGuess: string;
+	let gameOver = false;
+	let userWon = false;
+	let showNope = false;
+	let checked = false;
+	let numGuesses = 0;
 
-	const handleSubmit = () => {};
+	$: if (checked) {
+		mode = 'GUESS';
+	} else {
+		mode = 'ASK';
+	}
+
+	$: if (numGuesses === 2 || questions.length === 10) {
+		gameOver = true;
+	}
+
+	afterUpdate(() => {
+		if (tableWrapper) {
+			tableWrapper.scrollTo(0, tableWrapper.scrollHeight);
+		}
+	});
+
+	const handleSubmit = () => {
+		if (mode === 'ASK') {
+			if (inputQuestion.trim() === '') return;
+
+			questions = [...questions, { question: inputQuestion, answer: 'No' }];
+			inputQuestion = '';
+		} else {
+			if (inputGuess === answer) {
+				userWon = true;
+				gameOver = true;
+			} else {
+				numGuesses++;
+				showNope = true;
+			}
+		}
+	};
+
+	// questions.push({ question: 'Does it eat grass?', answer: 'No' });
+	// questions.push({ question: 'Is it found in Africa?', answer: 'Yes' });
+	// questions.push({ question: 'Does it eat grass?', answer: 'No' });
+	// questions.push({ question: 'Is it found in Africa?', answer: 'Yes' });
 </script>
 
-<main>
-	<h1>Where in the world am I?</h1>
-	<table>
-		<thead>
-			<tr>
-				<th>Question</th>
-				<th>Answer</th>
-			</tr>
-		</thead>
-		<tbody>
-			{#each questions as question}
-				<tr>
-					<td>{question}</td>
-					<td>Answer</td>
-				</tr>
-			{/each}
-		</tbody>
-	</table>
+<main class="mx-auto w-4/5 max-w-[800px] flex flex-col items-center mt-2 text-center">
+	<img src="/earth.png" class="w-[100px] md:w-[200px]" alt="planet earth" />
+	<h1
+		class="mb-4 mt-1 text-3xl font-extrabold md:text-5xl md:leading-normal tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-900 to-blue-500"
+	>
+		I'm thinking of an animal...
+	</h1>
 
-	<select bind:value={mode}>
-		<option value="ASK">Ask</option>
-		<option value="GUESS">Guess</option>
-	</select>
-	<!-- <p>{mode}</p> -->
-	<form on:submit|preventDefault={handleSubmit}>
-		{#if mode === 'ASK'}
-			<input type="text" placeholder="Ask a question..." name="question" bind:value={question} />
-		{:else}
-			<select bind:value={guess}>
-				{#each countryChoices as country}
-					<option value={country}>{country}</option>
-				{/each}
-			</select>
-		{/if}
-		<input type="submit" value={mode} />
-	</form>
+	{#if questions.length === 0}
+		<h2 class="mb-1">You can ask ten yes/no questions</h2>
+		<h2 class="mb-1">For example - <em>Is it a mammal?</em></h2>
+		<h2 class="mb-1">When you think you know the answer, make a guess!</h2>
+	{:else}
+		<div class="max-h-[250px] overflow-auto w-full" bind:this={tableWrapper}>
+			<table class="w-full">
+				<thead class="text-xs text-gray-700 uppercase border-b-2">
+					<tr>
+						<th class="text-left">Question</th>
+						<th class="">Answer</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each questions as { question, answer }}
+						<tr
+							class="border-b"
+							class:bg-green-50={answer === 'Yes'}
+							class:bg-red-50={answer === 'No'}
+							transition:fade
+						>
+							<td class="p-2 text-left">{question}</td>
+							<td>{answer}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	{/if}
 
-	<pre>{JSON.stringify(questions, null, 2)}</pre>
+	{#if gameOver}
+		<GameOver {answer} {userWon} />
+	{:else}
+		<div class="mt-4 mb-2 grid items-center grid-cols-[auto,1fr,1fr] sm:grid-cols-3 w-full">
+			<span
+				>❓ <span class="sm:inline hidden">Questions left:</span>
+				<strong>{10 - questions.length}</strong></span
+			>
+			<span
+				>🔍 <span class="sm:inline hidden">Guesses left: </span><strong class="ml-2 sm:ml-0">
+					{2 - numGuesses}</strong
+				></span
+			>
+			<div class="flex items-center gap-2 justify-end">
+				<span class="ml-3 text-sm font-medium text-gray-900">Ask</span>
+				<label class="relative inline-flex items-center cursor-pointer">
+					<input type="checkbox" value="" class="sr-only peer" bind:checked />
+					<div
+						class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"
+					/>
+				</label>
+				<span class="text-sm font-medium text-gray-900">Guess</span>
+			</div>
+		</div>
+
+		<form on:submit|preventDefault={handleSubmit} class="flex w-full gap-2 mt-2 relative">
+			{#if mode === 'ASK'}
+				<input
+					type="text"
+					placeholder="Ask a question..."
+					name="question"
+					bind:value={inputQuestion}
+					class="bg-gray-50 border border-gray-300 text-gray-900 text-sm sm:text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 grow"
+				/>
+			{:else}
+				<select
+					bind:value={inputGuess}
+					class="bg-gray-50 text-center border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 w-full"
+				>
+					{#each animalChoices as animal}
+						<option value={animal}>{animal}</option>
+					{/each}
+				</select>
+			{/if}
+			<button
+				type="submit"
+				class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-auto px-5 py-2.5 text-center"
+				>{mode}</button
+			>
+
+			{#if showNope}
+				<Nope on:fade-out={() => (showNope = false)} />
+			{/if}
+		</form>
+	{/if}
+	{answer}
 </main>
