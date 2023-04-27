@@ -5,16 +5,16 @@
 	import GameOver from '../components/GameOver.svelte';
 	import Nope from '../components/Nope.svelte';
 
-	// Pick a random country as the answer
+	// Pick a random animal as the answer
 	const answer = animals[Math.floor(Math.random() * animals.length)];
 
-	// Pick 9 other countries to use as possible choices
+	// Pick 9 other animals to use as possible choices
 	const animalChoices: string[] = [];
 
 	while (animalChoices.length < 9) {
-		const country = animals[Math.floor(Math.random() * animals.length)];
-		if (country !== answer && !animalChoices.includes(country)) {
-			animalChoices.push(country);
+		const animal = animals[Math.floor(Math.random() * animals.length)];
+		if (animal !== answer && !animalChoices.includes(animal)) {
+			animalChoices.push(animal);
 		}
 	}
 
@@ -24,7 +24,7 @@
 
 	let mode: 'ASK' | 'GUESS' = 'ASK';
 	let tableWrapper: HTMLDivElement;
-	let questions = [] as { question: string; answer: string }[];
+	let questions = [] as { question: string; response: string }[];
 	let inputQuestion = '';
 	let inputGuess: string;
 	let gameOver = false;
@@ -32,6 +32,7 @@
 	let showNope = false;
 	let checked = false;
 	let numGuesses = 0;
+	let loading = false;
 
 	$: if (checked) {
 		mode = 'GUESS';
@@ -49,12 +50,22 @@
 		}
 	});
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		if (mode === 'ASK') {
 			if (inputQuestion.trim() === '') return;
 
-			questions = [...questions, { question: inputQuestion, answer: 'No' }];
+			loading = true;
+			const { response } = await fetch('/api/askquestion', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ answer, question: inputQuestion })
+			}).then((res) => res.json());
+
+			questions = [...questions, { question: inputQuestion, response }];
 			inputQuestion = '';
+			loading = false;
 		} else {
 			if (inputGuess === answer) {
 				userWon = true;
@@ -94,15 +105,15 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each questions as { question, answer }}
+					{#each questions as { question, response }}
 						<tr
 							class="border-b"
-							class:bg-green-50={answer === 'Yes'}
-							class:bg-red-50={answer === 'No'}
+							class:bg-green-50={response === 'Yes.'}
+							class:bg-red-50={response === 'No.'}
 							transition:fade
 						>
 							<td class="p-2 text-left">{question}</td>
-							<td>{answer}</td>
+							<td>{response}</td>
 						</tr>
 					{/each}
 				</tbody>
@@ -157,7 +168,7 @@
 			<button
 				type="submit"
 				class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-auto px-5 py-2.5 text-center disabled:bg-slate-400"
-				disabled={questions.length === 10}>{mode}</button
+				disabled={questions.length === 10 || loading}>{mode}</button
 			>
 
 			{#if showNope}
