@@ -39,7 +39,7 @@
 		mode = 'ASK';
 	}
 
-	$: if (numGuesses === 2 || questions.length === 10) {
+	$: if (numGuesses === 2) {
 		gameOver = true;
 	}
 
@@ -81,8 +81,8 @@
 	</h1>
 
 	{#if questions.length === 0}
-		<h2 class="mb-1">You can ask ten yes/no questions</h2>
-		<h2 class="mb-1">For example - <em>Is it a mammal?</em></h2>
+		<h2 class="mb-1">You can ask ten yes or no questions</h2>
+		<h2 class="mb-1"><em>Is it a mammal?</em></h2>
 		<h2 class="mb-1">When you think you know the answer, make a guess!</h2>
 	{:else}
 		<div class="max-h-[250px] overflow-auto w-full" bind:this={tableWrapper}>
@@ -156,8 +156,8 @@
 			{/if}
 			<button
 				type="submit"
-				class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-auto px-5 py-2.5 text-center"
-				>{mode}</button
+				class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-auto px-5 py-2.5 text-center disabled:bg-slate-400"
+				disabled={questions.length === 10}>{mode}</button
 			>
 
 			{#if showNope}
