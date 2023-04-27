@@ -28,6 +28,8 @@ export async function POST({ request }) {
 	const response = completion.choices[0].message.content;
 
 	return json({ response });
-
-	// TODO: can I run this on the edge with Vercel?
 }
+
+export const config = {
+	runtime: 'edge'
+};
