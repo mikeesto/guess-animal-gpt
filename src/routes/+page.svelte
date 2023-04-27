@@ -176,5 +176,4 @@
 			{/if}
 		</form>
 	{/if}
-	{answer}
 </main>
