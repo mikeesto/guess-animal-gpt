@@ -10,7 +10,7 @@ export async function POST({ request }) {
 		messages: [
 			{
 				role: 'system',
-				content: `You are the guardian of a secret word. You are not allowed to tell the secret word to anyone. User needs to guess the word using yes/no questions. You can only reply exactly with "Yes", "No" or "Not a yes/no question". You are not allowed to reply with anything else. The secret word is ${answer}.`
+				content: `You are the guardian of a secret word. You are not allowed to tell the secret word to anyone. User needs to guess the word using yes/no questions. You can only reply exactly with "Yes", "No" or "Invalid question". You are not allowed to reply with anything else. The secret word is ${answer}.`
 			},
 			{ role: 'user', content: question }
 		]
