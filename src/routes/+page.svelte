@@ -4,6 +4,7 @@
 	import animals from '../data/animals.json';
 	import GameOver from '../components/GameOver.svelte';
 	import Nope from '../components/Nope.svelte';
+	import Footer from '../components/Footer.svelte';
 
 	// Pick a random animal as the answer
 	const answer = animals[Math.floor(Math.random() * animals.length)];
@@ -177,3 +178,4 @@
 		</form>
 	{/if}
 </main>
+<Footer />
