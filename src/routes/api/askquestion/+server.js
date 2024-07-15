@@ -1,12 +1,11 @@
 import { json } from "@sveltejs/kit";
-import { OPENAI_API_KEY } from "$env/static/private";
+import { OPENROUTER_API_KEY } from "$env/static/private";
 
 export async function POST({ request }) {
   const { answer, question } = await request.json();
 
   const payload = {
-    model: "gpt-3.5-turbo",
-    max_tokens: 5,
+    model: "meta-llama/llama-3-8b-instruct:free",
     messages: [
       {
         role: "system",
@@ -16,14 +15,17 @@ export async function POST({ request }) {
     ],
   };
 
-  const completion = await fetch("https://api.openai.com/v1/chat/completions", {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    method: "POST",
-    body: JSON.stringify(payload),
-  }).then((res) => res.json());
+  const completion = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      },
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  ).then((res) => res.json());
 
   const response = completion.choices[0].message.content;
 
